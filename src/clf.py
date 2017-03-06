@@ -282,7 +282,8 @@ def plot_roc(model, X_test, target, n_features):
     fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score) #calculate FPR & TPR
     auc_score = metrics.auc(fpr, tpr) #calculate area under the curve
 
-    plt.figure()
+    # Plot
+    fig = plt.figure()
     plt.plot(fpr, tpr, label='ROC curve (area = %0.3f)' % auc_score)
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([-0.05, 1])
@@ -291,8 +292,13 @@ def plot_roc(model, X_test, target, n_features):
     plt.ylabel('True Positive Rate')
     plt.legend(loc="lower right")
     plt.title('Receiver operating characteristic: \n (n_features = %d)' % (n_features))
-    plt.show()
-    plt.close()
+
+    # Save Plot
+    abspath = os.path.abspath(__file__)  # absolute pathway to file
+    head_path, f_name = os.path.split(abspath)
+    work_dir = os.path.split(head_path)[0]  # root working dir
+    aucfig_path = os.path.join(work_dir, 'results', 'clf_auc.png')
+    fig.savefig(aucfig_path, format='png')
     return
 
 
