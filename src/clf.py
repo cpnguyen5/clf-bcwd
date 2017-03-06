@@ -150,7 +150,150 @@ def clf(X_train, X_test, y_train):
     return (model, y_pred)
 
 
+def sensitivity(model_pred, target):
+    """
+    Function calculates the sensitivity value of the classification, given the model's prediction and true labels.
 
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: sensitivity value
+    """
+    y_pred = model_pred # prediction
+    y_true = target # true labels
+    #Confusion Matrix
+    cm = metrics.confusion_matrix(y_true, y_pred)
+    TN = float(cm[0,0]) #True Negative
+    FP = float(cm[0,1]) #False Positive
+    FN = float(cm[1,0]) #False Negative
+    TP = float(cm[1,1]) #True Positive
+
+    #sensitivity calculation
+    final_sensitivity = TP/(TP + FN)
+    return final_sensitivity
+
+
+def specificity(model_pred, target):
+    """
+    Function calculates the specificity value of the classification, given the model's prediction and true labels.
+
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: specificity value
+    """
+    y_pred = model_pred #prediction
+    y_true = target #true labels
+    #Confusion Matrix
+    cm = metrics.confusion_matrix(y_true, y_pred)
+    TN = float(cm[0,0]) #True Negative
+    FP = float(cm[0,1]) #False Positive
+    FN = float(cm[1,0]) #False Negative
+    TP = float(cm[1,1]) #True Positive
+
+    #specificity calculation
+    N = FP + TN
+    TNR = TN/N
+    return TNR
+
+
+def accuracy(model_pred, target):
+    """
+    Function calculates the accuracy value of the classification, given the model's prediction and true labels.
+
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: accuracy value
+    """
+    accuracy = metrics.accuracy_score(target, model_pred)
+    return accuracy
+
+
+def f_score(model_pred, target):
+    """
+    Function calculates the F1-score value of the classification, given the model's prediction and true labels. F1-score
+    is the weighted average of precision & recall with a range of [0, 1].
+
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: F1-score value
+    """
+    y_pred = model_pred #prediction
+    y_true = target #true labels
+    f1 = metrics.f1_score(y_true, y_pred)
+    return f1
+
+
+def precision(model_pred, target):
+    """
+    Function calculates the precision value of the classification, given the model's prediction and true labels.
+
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: precision value
+    """
+    y_pred = model_pred #prediction
+    y_true = target #true labels
+    precision_score = metrics.precision_score(y_true, y_pred)
+    return precision_score
+
+
+def recall(model_pred, target):
+    """
+    Function calculates the recall value of the classification, given the model's prediction and true labels.
+
+
+    :param model_pred: model's classification prediction
+    :param target: labels (y_test)
+    :return: recall value
+    """
+    y_pred = model_pred #prediction
+    y_true = target #true labels
+    recall_score = metrics.recall_score(y_true, y_pred)
+    return recall_score
+
+
+def df_auc(model, X_test, target):
+    """
+    Function calculates the area under the (ROC) curve based on the decision function (y_score).
+
+    :param model: fitted classifier model
+    :param X_test: Testing set features
+    :param target: labels (y_test)
+    :return: AUC score
+    """
+    y_true = target
+    y_score = model.decision_function(X_test) #Predict confidence scores
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score) #calculate FPR & TPR
+    auc_score = metrics.auc(fpr, tpr) #calculate AUC
+    return auc_score
+
+
+def plot_roc(model, X_test, target, n_features):
+    """
+    Function uses matplotlib to plot the ROC curve of the classifier.
+
+    :param model: fitted classification model
+    :param X_test: Testing set features (X_test)
+    :param target: labels (y_test)
+    :param n_features: int indicating number of features of data set
+    :return: Plot of ROC curve
+    """
+    y_true = target
+    y_score = model.decision_function(X_test)
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score) #calculate FPR & TPR
+    auc_score = metrics.auc(fpr, tpr) #calculate area under the curve
+
+    plt.figure()
+    plt.plot(fpr, tpr, label='ROC curve (area = %0.3f)' % auc_score)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([-0.05, 1])
+    plt.ylim([0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.title('Receiver operating characteristic: \n (n_features = %d)' % (n_features))
+    plt.show()
+    plt.close()
+    return
 
 
 #main
@@ -168,7 +311,8 @@ if __name__ == '__main__':
     scaled_X_train, scaled_X_test = scale(X_train, X_test)
 
     # Feature Selection
-    select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=8)
+    n_features = 8
+    select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=n_features)
     feat_names = list(data.columns)[:-1]
     # for i in range(len(feat_names)):
     #     print feat_names[i], "\n \t", "score: ", score[i], "\n \t", "p-value: ", pval[i]
@@ -181,3 +325,15 @@ if __name__ == '__main__':
     print "Best Estimator: ", clf_model, "\n"
     # clf_model, y_pred = clf(select_X_train, select_X_test, y_train) #alternative clf function [no grid search]
 
+    print "Classifier Model (SVC) Metrics: "
+    print "------------------------------------------------------------------------"
+    print "Accuracy: ", np.around(accuracy(y_pred, y_test), 5)
+    print "Senstivity: ", np.around(sensitivity(y_pred, y_test), 5)
+    print "Specificity: ", np.around(specificity(y_pred, y_test), 5)
+    print "F1 Score: ", np.around(f_score(y_pred, y_test), 5)
+    print "Precision: ", np.around(precision(y_pred, y_test), 5)
+    print "Recall: ", np.around(recall(y_pred, y_test), 5)
+    print "AUC: ", np.around(df_auc(clf_model, select_X_test, y_test), 5), "\n"
+
+    #ROC Plot
+    plot_roc(clf_model,select_X_test, y_test, n_features)
