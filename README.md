@@ -29,6 +29,6 @@ The classes for the dataset include: benign for non-cancerous tumors and maligna
   1. **Benign**: `0`
   2. **Malignant**: `1`
   
-There are approximately 65% benign cases (n<sub>benign</sub>=658) and 34.5% malignant cases (n<sub>malignant>/sub>=241).
+There are approximately 65% benign cases (n<sub>benign</sub>=658) and 34.5% malignant cases (n<sub>malignant</sub>=241).
   
 
