@@ -317,7 +317,7 @@ if __name__ == '__main__':
     scaled_X_train, scaled_X_test = scale(X_train, X_test)
 
     # Feature Selection
-    n_features = 8
+    n_features = 7
     select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=n_features)
     feat_names = list(data.columns)[:-1]
     # for i in range(len(feat_names)):
