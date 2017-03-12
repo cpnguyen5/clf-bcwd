@@ -8,7 +8,7 @@ from sklearn.feature_selection import SelectKBest, f_classif, chi2
 from sklearn import metrics, grid_search, svm
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import silhouette_score
+from sklearn.ensemble import RandomForestClassifier
 
 
 def getPath():
@@ -132,6 +132,25 @@ def gridsearch(X_train, X_test, y_train, model):
         ]
 
         blank_clf = LogisticRegression(random_state=2)
+
+    elif model == "RF": # random forest
+        param_grid = [
+            {'n_estimators': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 'criterion': ['gini', 'entropy'],
+             'max_features': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'auto']}
+        ]
+
+        rfc = RandomForestClassifier(random_state=2)
+
+        # Grid search to find "best" random forest classifier -- Hyperparameters Optimization
+        clf = grid_search.GridSearchCV(rfc, param_grid)  # classifier + optimal parameters
+        clf = clf.fit(X_train, y_train)  # fitted classifier -- Training Set
+        best_est = clf.best_estimator_
+        clf_pred = best_est.predict(X_test)  # apply classifier on test set for label predictions
+        params = clf.best_params_  # optimal parameters
+        score = clf.best_score_  # best grid score
+        imp = best_est.feature_importances_
+        return (best_est, clf_pred, params, score, imp)
+
 
     # Grid Search - Hyperparameters Optimization
     clf = grid_search.GridSearchCV(blank_clf, param_grid, n_jobs=-1)  # classifier + optimal parameters
@@ -385,7 +404,7 @@ if __name__ == '__main__':
     scaled_X_train, scaled_X_test = scale(X_train, X_test)
 
     # Feature Selection
-    n_features = 7
+    n_features = 3
     select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=n_features)
     feat_names = list(data.columns)[:-1]
 
@@ -456,3 +475,22 @@ if __name__ == '__main__':
 
     #ROC Plot
     plot_roc_pp(gnb_model,select_X_test, y_test, n_features, name = 'Gaussian Naive Bayes')
+
+    print "================================================================================"
+    print "Classification Metrics: Random Forest"
+    print "================================================================================", "\n"
+    rf_model, rf_pred, rf_param, rf_score, imp = gridsearch(X_train, X_test, y_train, model='RF')
+    print "Best Parameters: ", rf_param
+    print "Best Grid Search Score: ", rf_score
+    print "Best Estimator: ", rf_model, "\n"
+
+    print "Accuracy: ", np.around(accuracy(rf_pred, y_test), 5)
+    print "Senstivity: ", np.around(sensitivity(rf_pred, y_test), 5)
+    print "Specificity: ", np.around(specificity(rf_pred, y_test), 5)
+    print "F1 Score: ", np.around(f_score(rf_pred, y_test), 5)
+    print "Precision: ", np.around(precision(rf_pred, y_test), 5)
+    print "Recall: ", np.around(recall(rf_pred, y_test), 5)
+    print "AUC: ", np.around(pp_auc(rf_model, X_test, y_test), 5), "\n"
+
+    #ROC Plot
+    plot_roc_pp(rf_model, X_test, y_test, n_features, name='Random Forest')
