@@ -101,7 +101,7 @@ def feature_select(X_train, X_test, y_train, n_feat='all'):
     return (select_X_train, select_X_test, scores, pvals)
 
 
-def gridsearch(X_train, X_test, y_train):
+def gridsearch(X_train, X_test, y_train, model):
     """
     Function determines the optimal parameters of the best classifier model/estimator by performing a grid search.
     The best model will be fitted with the Training set and subsequently used to predict the classification/labels
@@ -111,17 +111,27 @@ def gridsearch(X_train, X_test, y_train):
     :param X_train: Training set features
     :param X_test: Testing set features
     :param y_train: Training set labels
+    :param model: str indicating classifier model
     :return: tuple of (best classifier instance, clf predictions, dict of best parameters, grid score)
     """
     # Parameter Grid - dictionary of parameters (map parameter names to values to be searched)
-    param_grid = [
-        {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['linear']},
-        {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['rbf']},
-        # {'C':[0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'degree': [2], 'kernel': ['poly']}
-    ]
+    if model == 'SVM': # support vector machine
+        param_grid = [
+            {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['linear']},
+            {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['rbf']},
+            # {'C':[0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'degree': [2], 'kernel': ['poly']}
+        ]
 
-    # Blank clf instance
-    blank_clf = svm.SVC()
+        # Blank clf instance
+        blank_clf = svm.SVC()
+
+    elif model == 'LR': #logistic regression
+        param_grid = [
+            {'C': [0.01, 0.1, 1, 10, 100, 1000], 'fit_intercept': [True, False], 'penalty': ['l2'], 'solver': ['newton-cg', 'lbfgs', 'liblinear', 'sag']},
+            {'C': [0.01, 0.1, 1, 10, 100, 1000], 'fit_intercept': [True, False], 'penalty': ['l1'], 'solver': ['liblinear']}
+        ]
+
+        blank_clf = LogisticRegression(random_state=2)
 
     # Grid Search - Hyperparameters Optimization
     clf = grid_search.GridSearchCV(blank_clf, param_grid, n_jobs=-1)  # classifier + optimal parameters
@@ -144,7 +154,8 @@ def clf(X_train, X_test, y_train):
     :param y_train: Training set labels
     :return: tuple of (fitted classifier instance, classifier predictions).
     """
-    model = svm.SVC(kernel='linear', C=1, gamma=0.0001)
+    # model = svm.SVC(kernel='linear', C=1, gamma=0.0001)
+    model = GaussianNB()
     model = model.fit(X_train, y_train) #Fit classifier to Training set
     y_pred = model.predict(X_test) # Test classifier on Testing set
     return (model, y_pred)
@@ -267,7 +278,23 @@ def df_auc(model, X_test, target):
     return auc_score
 
 
-def plot_roc(model, X_test, target, n_features):
+def pp_auc(model, X_test, target):
+    """
+    Function calculates the area under the (ROC) curve based on the predicted probability (y_score).
+
+    :param model: fitted classifier model
+    :param X_test: Testing set features
+    :param target: labels (y_test)
+    :return: AUC score
+    """
+    y_true = target
+    y_score = model.predict_proba(X_test) #Predict probability estimate
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score[:,1]) #calculate FPR & TPR
+    auc_score = metrics.auc(fpr, tpr) #calculate AUC
+    return auc_score
+
+
+def plot_roc_df (model, X_test, target, n_features, name):
     """
     Function uses matplotlib to plot the ROC curve of the classifier.
 
@@ -275,6 +302,7 @@ def plot_roc(model, X_test, target, n_features):
     :param X_test: Testing set features (X_test)
     :param target: labels (y_test)
     :param n_features: int indicating number of features of data set
+    :param name: str indicating classifier model
     :return: Plot of ROC curve
     """
     y_true = target
@@ -291,13 +319,53 @@ def plot_roc(model, X_test, target, n_features):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.legend(loc="lower right")
-    plt.title('Receiver operating characteristic: \n (n_features = %d)' % (n_features))
+    plt.title('Receiver operating characteristic (%s): \n (n_features = %d)' % (name, n_features))
 
     # Save Plot
     abspath = os.path.abspath(__file__)  # absolute pathway to file
     head_path, f_name = os.path.split(abspath)
     work_dir = os.path.split(head_path)[0]  # root working dir
-    aucfig_path = os.path.join(work_dir, 'results', 'clf_auc.png')
+
+    fname = '%s_auc.png' % name
+    aucfig_path = os.path.join(work_dir, 'results', fname)
+    fig.savefig(aucfig_path, format='png')
+    return
+
+
+def plot_roc_pp (model, X_test, target, n_features, name):
+    """
+    Function uses matplotlib to plot the ROC curve of the classifier.
+
+    :param model: fitted classification model
+    :param X_test: Testing set features (X_test)
+    :param target: labels (y_test)
+    :param n_features: int indicating number of features of data set
+    :param name: str indicating classifier model
+    :return: Plot of ROC curve
+    """
+    y_true = target
+    y_score = model.predict_proba(X_test)
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_score[:,1]) #calculate FPR & TPR
+    auc_score = metrics.auc(fpr, tpr) #calculate area under the curve
+
+    # Plot
+    fig = plt.figure()
+    plt.plot(fpr, tpr, label='ROC curve (area = %0.3f)' % auc_score)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([-0.05, 1])
+    plt.ylim([0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    plt.title('Receiver operating characteristic: (%s) \n (n_features = %d)' % (name, n_features))
+
+    # Save Plot
+    abspath = os.path.abspath(__file__)  # absolute pathway to file
+    head_path, f_name = os.path.split(abspath)
+    work_dir = os.path.split(head_path)[0]  # root working dir
+
+    fname = '%s_auc.png' % name
+    aucfig_path = os.path.join(work_dir, 'results', fname)
     fig.savefig(aucfig_path, format='png')
     return
 
@@ -309,6 +377,7 @@ if __name__ == '__main__':
     # Obtain Data
     path = getPath()
     data = readCSV(path)
+    print data.columns
 
     # Data Partition
     X_train, X_test, y_train, y_test = data_partition(data)
@@ -325,21 +394,61 @@ if __name__ == '__main__':
     # print
 
     # Classification
-    clf_model, y_pred, best_p, best_score = gridsearch(select_X_train, select_X_test, y_train)
-    print "Best Parameters: ", best_p
-    print "Best Grid Search Score: ", best_score
-    print "Best Estimator: ", clf_model, "\n"
+    print "================================================================================"
+    print "Classification Metrics: Support Vector Machine"
+    print "================================================================================", "\n"
+    # Model
+    svm_model, svm_pred, svm_param, svm_score = gridsearch(select_X_train, select_X_test, y_train, model='SVM')
+    print "Best Parameters: ", svm_param
+    print "Best Grid Search Score: ", svm_score
+    print "Best Estimator: ", svm_model, "\n"
     # clf_model, y_pred = clf(select_X_train, select_X_test, y_train) #alternative clf function [no grid search]
 
-    print "Classifier Model (SVC) Metrics: "
-    print "------------------------------------------------------------------------"
-    print "Accuracy: ", np.around(accuracy(y_pred, y_test), 5)
-    print "Senstivity: ", np.around(sensitivity(y_pred, y_test), 5)
-    print "Specificity: ", np.around(specificity(y_pred, y_test), 5)
-    print "F1 Score: ", np.around(f_score(y_pred, y_test), 5)
-    print "Precision: ", np.around(precision(y_pred, y_test), 5)
-    print "Recall: ", np.around(recall(y_pred, y_test), 5)
-    print "AUC: ", np.around(df_auc(clf_model, select_X_test, y_test), 5), "\n"
+    # Metrics
+    print "Accuracy: ", np.around(accuracy(svm_pred, y_test), 5)
+    print "Senstivity: ", np.around(sensitivity(svm_pred, y_test), 5)
+    print "Specificity: ", np.around(specificity(svm_pred, y_test), 5)
+    print "F1 Score: ", np.around(f_score(svm_pred, y_test), 5)
+    print "Precision: ", np.around(precision(svm_pred, y_test), 5)
+    print "Recall: ", np.around(recall(svm_pred, y_test), 5)
+    print "AUC: ", np.around(df_auc(svm_model, select_X_test, y_test), 5), "\n"
 
     #ROC Plot
-    plot_roc(clf_model,select_X_test, y_test, n_features)
+    plot_roc_df(svm_model,select_X_test, y_test, n_features, name='SVM')
+
+    print "================================================================================"
+    print "Classification Metrics: Logistic Regression"
+    print "================================================================================", "\n"
+    lr_model, lr_pred, lr_param, lr_score = gridsearch(select_X_train, select_X_test, y_train, model='LR')
+    print "Best Parameters: ", lr_param
+    print "Best Grid Search Score: ", lr_score
+    print "Best Estimator: ", lr_model, "\n"
+    # clf_model, y_pred = clf(select_X_train, select_X_test, y_train) #alternative clf function [no grid search]
+
+
+    print "Accuracy: ", np.around(accuracy(lr_pred, y_test), 5)
+    print "Senstivity: ", np.around(sensitivity(lr_pred, y_test), 5)
+    print "Specificity: ", np.around(specificity(lr_pred, y_test), 5)
+    print "F1 Score: ", np.around(f_score(lr_pred, y_test), 5)
+    print "Precision: ", np.around(precision(lr_pred, y_test), 5)
+    print "Recall: ", np.around(recall(lr_pred, y_test), 5)
+    print "AUC: ", np.around(pp_auc(lr_model, select_X_test, y_test), 5), "\n"
+
+    #ROC Plot
+    plot_roc_df(lr_model,select_X_test, y_test, n_features, name='Logistic Regression')
+
+    print "================================================================================"
+    print "Classification Metrics: Gaussian Naive Bayes"
+    print "================================================================================", "\n"
+    gnb_model, gnb_pred = clf(select_X_train, select_X_test, y_train)
+
+    print "Accuracy: ", np.around(accuracy(gnb_pred, y_test), 5)
+    print "Senstivity: ", np.around(sensitivity(gnb_pred, y_test), 5)
+    print "Specificity: ", np.around(specificity(gnb_pred, y_test), 5)
+    print "F1 Score: ", np.around(f_score(gnb_pred, y_test), 5)
+    print "Precision: ", np.around(precision(gnb_pred, y_test), 5)
+    print "Recall: ", np.around(recall(gnb_pred, y_test), 5)
+    print "AUC: ", np.around(pp_auc(gnb_model, select_X_test, y_test), 5), "\n"
+
+    #ROC Plot
+    plot_roc_pp(gnb_model,select_X_test, y_test, n_features, name = 'Gaussian Naive Bayes')
