@@ -119,7 +119,7 @@ def gridsearch(X_train, X_test, y_train, model):
         param_grid = [
             {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['linear']},
             {'C': [0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'kernel': ['rbf']},
-            # {'C':[0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'degree': [2], 'kernel': ['poly']}
+            {'C':[0.01, 0.1, 1, 10, 100, 1000], 'gamma': [0.0001, 0.001, 0.01, 0.1, 1, 10], 'degree': [2, 3, 4, 5], 'kernel': ['poly']}
         ]
 
         # Blank clf instance
@@ -377,7 +377,6 @@ if __name__ == '__main__':
     # Obtain Data
     path = getPath()
     data = readCSV(path)
-    print data.columns
 
     # Data Partition
     X_train, X_test, y_train, y_test = data_partition(data)
@@ -389,9 +388,14 @@ if __name__ == '__main__':
     n_features = 7
     select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=n_features)
     feat_names = list(data.columns)[:-1]
-    # for i in range(len(feat_names)):
-    #     print feat_names[i], "\n \t", "score: ", score[i], "\n \t", "p-value: ", pval[i]
-    # print
+
+    print "================================================================================"
+    print "Feature Selection"
+    print "================================================================================", "\n"
+    fselect_score = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(score, name='score'),
+                               pd.Series(pval, name='pval')],
+                              axis=1)
+    print fselect_score.sort_values('score', ascending=False), '\n'
 
     # Classification
     print "================================================================================"
