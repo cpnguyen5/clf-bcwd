@@ -89,14 +89,15 @@ Please refer to the **writeup.md** markdown file for discussion of the results.
 
 ### Metrics
 ##### Sensitivity
-`sensitivity = TP / (TP + FN)`
+`sensitivity = TP / (TP + FN)`  
+
 Sensitivity is the probability that a diseased patient has a positive test (*malignant*). In other words, it's the 
 likelihood that a patient with malignant breast cancer has a positive diagnosis.
 
 *Purpose*: Determine how good the model is at detecting positive diagnoses.
 
 ##### Specificity
-`specificity = TN / (FP + TN)`
+`specificity = TN / (FP + TN)`  
 
 The probability of a negative test result given the absence of the disease. In other words, the likelihood that a 
 patient with benign breast cancer has a negative diagnosis.
@@ -104,14 +105,15 @@ patient with benign breast cancer has a negative diagnosis.
 *Purpose*: Determine how good the model is at avoiding false alarms (false positive diagnoses).
 
 ##### Precision
-`precision = TP / (TP + FP)`
+`precision = TP / (TP + FP)`  
+
 The percentage of results obtained that were actually correct. The number of patients classified as being diagnosed with
 malignant breast cancer that were *actually* positive for the diagnosis.
 
 *Purpose*: Determine how many of the positively diagnoses patients were relevant and verify if the test is cheating.
 
 ##### Recall
-`recall = TP / (TP + FN)`
+`recall = TP / (TP + FN)`  
 
 *Purpose*: Same as sensitivity
 
