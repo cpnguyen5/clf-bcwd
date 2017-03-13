@@ -448,6 +448,12 @@ if __name__ == '__main__':
     print "Best Estimator: ", lr_model, "\n"
     # clf_model, y_pred = clf(select_X_train, select_X_test, y_train) #alternative clf function [no grid search]
 
+    # Logistic Regression Parameter Coefficients (slope & y-int)
+    print "Model's y-intercept %.3f = " % lr_model.intercept_
+    lr_coef = pd.concat([pd.Series(['size_uniformity', 'shape_uniformity', 'bare_nuclei', 'bland_chromatin',
+                                    'normal_nucleoli'], name='feat'), pd.Series(lr_model.coef_[0], name='Coef')],
+                              axis=1)
+    print lr_coef, "\n"
 
     print "Accuracy: ", np.around(accuracy(lr_pred, y_test), 5)
     print "Senstivity: ", np.around(sensitivity(lr_pred, y_test), 5)
@@ -485,7 +491,7 @@ if __name__ == '__main__':
     print "Best Estimator: ", rf_model, "\n"
 
     rf_fimp = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(imp, name='Importance Value')], axis=1)
-    print "Feature Importances:", "\n", rf_fimp, "\n"
+    print "Feature Importances:", "\n", rf_fimp.sort_values('Importance Value', ascending=False), "\n"
 
     print "Accuracy: ", np.around(accuracy(rf_pred, y_test), 5)
     print "Senstivity: ", np.around(sensitivity(rf_pred, y_test), 5)
