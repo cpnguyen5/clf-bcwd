@@ -404,7 +404,7 @@ if __name__ == '__main__':
     scaled_X_train, scaled_X_test = scale(X_train, X_test)
 
     # Feature Selection
-    n_features = 3
+    n_features = 5
     select_X_train, select_X_test, score, pval = feature_select(scaled_X_train, scaled_X_test, y_train, n_feat=n_features)
     feat_names = list(data.columns)[:-1]
 
@@ -483,6 +483,9 @@ if __name__ == '__main__':
     print "Best Parameters: ", rf_param
     print "Best Grid Search Score: ", rf_score
     print "Best Estimator: ", rf_model, "\n"
+
+    rf_fimp = pd.concat([pd.Series(feat_names, name='feat'), pd.Series(imp, name='Importance Value')], axis=1)
+    print "Feature Importances:", "\n", rf_fimp, "\n"
 
     print "Accuracy: ", np.around(accuracy(rf_pred, y_test), 5)
     print "Senstivity: ", np.around(sensitivity(rf_pred, y_test), 5)
