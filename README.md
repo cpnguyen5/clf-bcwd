@@ -87,4 +87,48 @@ The ranking of features are an attribute of the model and can be viewed through 
 ### Results
 Please refer to the **writeup.md** markdown file for discussion of the results.
 
-#### Metrics
+### Metrics
+##### Sensitivity
+`sensitivity = TP / (TP + FN)`
+Sensitivity is the probability that a diseased patient has a positive test (*malignant*). In other words, it's the 
+likelihood that a patient with malignant breast cancer has a positive diagnosis.
+
+*Purpose*: Determine how good the model is at detecting positive diagnoses.
+
+##### Specificity
+`specificity = TN / (FP + TN)`
+
+The probability of a negative test result given the absence of the disease. In other words, the likelihood that a 
+patient with benign breast cancer has a negative diagnosis.
+
+*Purpose*: Determine how good the model is at avoiding false alarms (false positive diagnoses).
+
+##### Precision
+`precision = TP / (TP + FP)`
+The percentage of results obtained that were actually correct. The number of patients classified as being diagnosed with
+malignant breast cancer that were *actually* positive for the diagnosis.
+
+*Purpose*: Determine how many of the positively diagnoses patients were relevant and verify if the test is cheating.
+
+##### Recall
+`recall = TP / (TP + FN)`
+
+*Purpose*: Same as sensitivity
+
+##### F-Measure
+F1-measure is essentially a balance between *recall* and *precision*, providing a harmonic mean with a value range 
+of [0, 1].
+
+##### Accuracy
+Accuracy is how well the model correctly identifies or excludes a classification/outcome. In other words, it’s a measure 
+of the ratio of all classification instances that were correctly categorized/classified. 
+
+##### Area Under the (ROC) Curve 
+ROC curves evaluates the output quality of the classifier. It typically features the *true positive rate* and *false 
+positive rate* on the Y and X axis, respectively.  
+
+The goal is to have a false positive rate of 0 and true positive rate of 1 for optimal classifications. Thus, the ideal
+point on the ROC curve is at the "top left corner" for an area under the curv value of 1.0.
+
+The steepness of the ROC curve is significant as it illustrates the extent of the model's maximization the true positive 
+rate and minimization of the false positive rate.
