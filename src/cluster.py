@@ -59,7 +59,8 @@ def kmeans(scaler, norm_data, k):
     The function creates an instance of sklearn.cluster.KMeans with the indicated n_clusters. The model is fitted with
     normalized data to obtain the cluster labels, which is subsequently assigned to the original data. The assignment
     of cluster labels is for appropriate domain interpretation of plots. The silhouette score indicating the performance
-    of the clustering is returned in addition to the model and a list of the group of original data by their clusters.
+    of the clustering is returned in addition to a string indicating the model and a list of the group of original data
+    by their clusters.
 
     :param scaler: scaler object
     :param norm_data: normalized data
@@ -81,7 +82,7 @@ def kmeans(scaler, norm_data, k):
         lst_orig += [cluster_array] #Accumulate filtered array of specified cluster label
 
     sil_score = silhouette_score(norm_data, labels) #Silhouette Score
-    return (lst_orig, sil_score, model)
+    return (lst_orig, sil_score, "kmeans")
 
 
 def agglom_clust(scaler, norm_data, n_clusters, affinity, linkage):
@@ -89,8 +90,8 @@ def agglom_clust(scaler, norm_data, n_clusters, affinity, linkage):
     The function creates an instance of sklearn.cluster.AgglomerativeClustering with the indicated n_clusters. The model
     is fitted with normalized data to obtain the cluster labels, which is subsequently assigned to the original data.
     The assignment of cluster labels is for appropriate domain interpretation of plots. The silhouette score indicating
-    the performance of the clustering is returned in addition to the model and a list of the group of original data by
-    their clusters.
+    the performance of the clustering is returned in addition to a string indicating the model and a list of the group
+    of original data by their clusters.
 
     Please note that the linkage criterion, "ward," only accepts the metric of "euclidean" (affinity).
 
@@ -116,8 +117,70 @@ def agglom_clust(scaler, norm_data, n_clusters, affinity, linkage):
         lst_orig += [cluster_array] #Accumulate filtered array of specified cluster label
 
     sil_score = silhouette_score(norm_data, labels) #Silhouette Score
-    return (lst_orig, sil_score, model)
+    return (lst_orig, sil_score, "agglomerative")
 
+
+def plot(cluster_tuple, affin = None, linkage = None):
+    """
+    This function takes two required parameters: cluster_tuple and ex; and two optional parameters: affin and linkage.
+    Cluster_tuple are the outputs of the kmeans or agglom_clust functions. The optional parameters correlate to the
+    affinity and linkage parameters of the sklearn.clustering.AgglomerativeClustering function and is used in this
+    function for labeling purposes.
+    Given these inputs, this function will use matplotlib to plot the data, identifying each cluster assignment with
+    its respective unique shape and color.
+
+    :param cluster_tuple: Output of kmeans or agglom_clust function containing list of original data arrays for each
+    cluster label, silhouette score, and string indicating clustering algorithm.
+    :param ex: string containing "ex#" to indicate directory of specific data file
+    :param affin: Specified affinity or metric to compute linkage
+    :param linkage: Specified linkage criterion
+    :return: Plot of clustering assignments
+    """
+    plt.figure()#automatically increase Figure number
+    lst_clusters = cluster_tuple[0] #list of arrays for each cluster label
+    n_clusters = len(lst_clusters) #number of clusters
+    sil_score = cluster_tuple[1] #silhouette score
+    clust0 = lst_clusters[0] #array for cluster 0 (label 0)
+    clust1 = lst_clusters[1] #array for cluster 1 (label 1)
+
+    if n_clusters < 3: #Condition for number of clusters less than 3
+        if clust0.shape[1] < 2: #Condition for 1D arrays
+            #Create array of 0-valued elements to specify y = 0 for plotting purposes
+            y0 = np.zeros(clust0.shape)
+            y1 = np.zeros(clust1.shape)
+
+            #Scatter plot for each cluster assignment
+            plt.scatter(clust0[:, [0]], y0, c = 'b', marker = 'x') #Color blue, marker x
+            plt.scatter(clust1[:, [0]], y1, c= 'r', marker = 'o') #Color red, marker o
+        else:
+            plt.scatter(clust0[:, [0]], clust0[:, [1]], c = 'b', marker = 'x')
+            plt.scatter(clust1[:, [0]], clust1[:, [1]], c= 'r', marker = 'o')
+        plt.legend(('cluster 0', 'cluster 1'), loc = "lower right")
+
+    else:
+        clust2 = lst_clusters[2] #array for cluster 2 (label 2)
+        if clust0.shape[1] < 2: #Condition for 1D arrays
+            #Create array of 0-valued elements to specify y = 0 for plotting purposes
+            y0 = np.zeros(clust0.shape)
+            y1 = np.zeros(clust1.shape)
+            y2 = np.zeros(clust2.shape)
+
+            #Scatter plot for each cluster assignment
+            plt.scatter(clust0[:, [0]], y0, c = 'b', marker = 'x') #Color blue, marker x
+            plt.scatter(clust1[:, [0]], y1, c= 'r', marker = 'o') #Color red, marker o
+            plt.scatter(clust2[:, [0]], y2, c= 'y', marker = '^') #Color yellow, marker triangle
+        else:
+            plt.scatter(clust0[:, [0]], clust0[:, [1]], c = 'b', marker = 'x')
+            plt.scatter(clust1[:, [0]], clust1[:, [1]], c= 'r', marker = 'o')
+            plt.scatter(clust2[:, [0]], clust2[:, [1]], c = 'y', marker = '^')
+        plt.legend(('cluster 0', 'cluster 1', 'cluster 2'), loc = "lower right")
+
+    #Condition to Label Title of each Figure/plot with respective Clustering Algorithms, Sihouette Score, Data
+    if cluster_tuple[2] == "kmeans":
+        plt.suptitle("K-Means Clustering \n Original Data (Normalized Labels) -- Silhouette Score: %0.5f" % (sil_score))
+    else:
+        plt.suptitle("Agglomerative Clustering: %s, %s \n Original Data (Normalized Labels) -- Silhouette Score: %0.5f" %
+                     (affin, linkage, sil_score))
 
 
 #main
@@ -131,5 +194,8 @@ if __name__ == '__main__':
     scaled_data, scaler_obj = scale(data.iloc[:,1:3])
 
     # Cluster
-    km_lst_orig, km_sil_score, km_model = kmeans(scaler_obj,  scaled_data, k=2)
-
+    km_tuple = kmeans(scaler_obj,  scaled_data, k=2)
+    km_lst_orig, km_sil_score, km_model = km_tuple
+    plot(km_tuple)
+    plt.show()
+    plt.close()
