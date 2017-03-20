@@ -105,6 +105,14 @@ def kmeans(pca_obj, components, k):
     plt.legend(loc='upper right')
     plt.show()
     plt.close(fig)
+
+    # Save Plot
+    abspath = os.path.abspath(__file__)  # absolute pathway to file
+    head_path, f_name = os.path.split(abspath)
+    work_dir = os.path.split(head_path)[0]  # root working dir
+
+    aucfig_path = os.path.join(work_dir, 'results', 'kmeans.png')
+    fig.savefig(aucfig_path, format='png')
     return sil_score
 
 
